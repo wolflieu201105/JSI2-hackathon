@@ -1,6 +1,7 @@
 class Scene2 extends Phaser.Scene {
     #player1 = {
         health: 25,
+        dead: false,
         display: null,
         healthBar: null,
         nameTag: null,
@@ -15,6 +16,7 @@ class Scene2 extends Phaser.Scene {
     };
     #player2 = {
         health: 25,
+        dead: false,
         display: null,
         healthBar: null,
         nameTag: null,
@@ -28,6 +30,7 @@ class Scene2 extends Phaser.Scene {
     };
     #player3 = {
         health: 25,
+        dead: false,
         display: null,
         healthBar: null,
         nameTag: null,
@@ -41,6 +44,7 @@ class Scene2 extends Phaser.Scene {
     };
     #player4 = {
         health: 25,
+        dead: false,
         display: null,
         healthBar: null,
         nameTag: null,
@@ -52,13 +56,10 @@ class Scene2 extends Phaser.Scene {
         },
         defend: 0
     };
+    #playerTC;
     #ScardType = null;
-    #nameTags = [this.#player1.nameTag, this.#player2.nameTag, this.#player3.nameTag, this.#player4.nameTag];
-    #healthBars = [this.#player1.healthBar, this.#player2.healthBar, this.#player3.healthBar, this.#player4.healthBar];
-    #healths = [this.#player1.health, this.#player2.health, this.#player3.health, this.#player4.health];
-    #healthsDisplay = [this.#player1.display, this.#player2.display, this.#player3.display, this.#player4.display];
-    #Scards = [this.#player1.Scard, this.#player2.Scard, this.#player3.Scard, this.#player4.Scard];
-    #defendCards = [this.#player1.defend, this.#player2.defend, this.#player3.defend, this.#player4.defend]
+    #initialPlayers = [this.#player1, this.#player2, this.#player3, this.#player4];
+    #players = [this.#player1, this.#player2, this.#player3, this.#player4];
     // tạo chỗ để xem cac thứ của boss
     #bossTurn;
     #boss1;
@@ -141,6 +142,8 @@ class Scene2 extends Phaser.Scene {
         manaTaken: 1
     }
     #phongThu() {
+        this.#players[this.#gameTurn].defend += 1;
+        console.log(this.#players);
         this.#displayPlayingCards()
     }
     #PhongThu = {
@@ -206,7 +209,25 @@ class Scene2 extends Phaser.Scene {
         manaTaken: 1
     }
     #tienThoaiLuongNan() {
-        this.#displayPlayingCards()
+        this.#players[this.#gameTurn].health-=2;
+        if (this.#players[this.#gameTurn].health <= 0){
+            this.#players[this.#gameTurn].health = 0;
+            this.#players[this.#gameTurn].dead = true;
+        }
+        for (let i = 0; i < this.#bossNumber; i++) {
+            this.#bosses[i].setInteractive();
+            this.#bosses[i].on("pointerdown",
+                function () {
+                    for (let I = 0; I < this.#bossNumber; I++) {
+                        this.#bosses[i].removeInteractive();
+                    }
+                    this.#bossesPhase[i].health -= 4;
+                    this.#displayBossCards();
+                    this.#displayPlayingCards();
+                    this.#displayPlayers();
+                },
+                this);
+        }
     }
     #TienThoaiLuongNan = {
         type: "TienThoaiLuongNan",
@@ -370,10 +391,10 @@ class Scene2 extends Phaser.Scene {
     }
     create() {
         // tạo image người chơi vào trang
-        for (let i = 0; i < 4; i++) {
-            this.#nameTags[i] = this.add.image(75, 155 + i * 115, `nameTag`);
-            this.#healthBars[i] = this.add.image(75, 210 + i * 115, `healthBar`);
-            this.#healthsDisplay[i] = this.add.text(25, 185 + i * 115, `${this.#healths[i]}/25`, { fontSize: "20px", color: "black" });
+        for (let i = 0; i < this.#players.length; i++) {
+            this.#players[i].nameTag = this.add.image(75, 155 + i * 115, `nameTag`);
+            this.#players[i].healthBar = this.add.image(75, 210 + i * 115, `healthBar`);
+            this.#players[i].display = this.add.text(25, 185 + i * 115, `${this.#players[i].health}/25`, { fontSize: "20px", color: "black" });
         }
         this.#displayPlayers()
         // tạo chỗ cho thời gian, skip và những thứ bên lề
@@ -440,7 +461,10 @@ class Scene2 extends Phaser.Scene {
     #startPlaying() {
         if (this.#playTurn[this.#gameTurn] == "boss") {
             for (let i = 0; i < 4; i++) {
-                this.#defendCards[i] = 0;
+                this.#players[i].defend = 0;
+                if(this.#players[i].health <= 0){
+                    this.#players[i].dead = true;
+                }
             }
             this.#skip.setInteractive();
             this.#skip.on("pointerdown", this.#endTurn, this);
@@ -477,22 +501,23 @@ class Scene2 extends Phaser.Scene {
         this.#startPlaying();
     }
     #displayPlayers() {
-        for (let i = 0; i < 4; i++) {
-            console.log(this.#nameTags);
-            this.#nameTags[i] = this.add.image(75, 155 + i * 115, `nameTag`);
-            this.#healthBars[i] = this.add.image(75, 210 + i * 115, `healthBar`);
-            this.#healthsDisplay[i] = this.add.text(25, 185 + i * 115, `${this.#healths[i]}/25`, { fontSize: "20px", color: "black" });
-            if (this.#Scards[i].display != undefined) {
-                this.#Scards[i].destroy();
+        for (let i = 0; i < this.#playTurn.length-1; i++) {
+            this.#players[i].nameTag.destroy();
+            this.#players[i].healthBar.destroy();
+            this.#players[i].display.destroy();
+            this.#players[i].nameTag = this.add.image(75, 155 + i * 115, `nameTag`);
+            this.#players[i].healthBar = this.add.image(75, 210 + i * 115, `healthBar`);
+            this.#players[i].display = this.add.text(25, 185 + i * 115, `${this.#players[i].health}/25`, { fontSize: "20px", color: "black" });
+            if (this.#players[i].Scard.display != undefined) {
+                this.#players[i].Scard.destroy();
             }
-            if (this.#Scards[i].available == 1) {
-                this.#Scards[i].display = this.add.image(180, 170 + i * 115, this.#ScardType);
-                this.#Scards[i].display.setScale(0.6);
+            if (this.#players[i].Scard.available == 1) {
+                this.#players[i].Scard.display = this.add.image(180, 170 + i * 115, this.#ScardType);
+                this.#players[i].Scard.display.setScale(0.6);
             }
         }
     }
     #displayPlayingCards() {
-        console.log(this.#playDeck);
         if (this.#manaDisplay != undefined) {
             this.#manaDisplay.destroy();
         }
@@ -520,9 +545,7 @@ class Scene2 extends Phaser.Scene {
             }
         }
         for (let i = 0; i < this.#playDeck.length; i++) {
-            console.log("i");
             if (this.#playDeck[i].type == "VoDe") {
-                console.log("i");
                 this.#movingObjects[0] = this.#cards[i];
                 this.#movingObjects[1] = this.#playDeck[i].function;
                 for (let i = 0; i < this.#playDeck.length; i++) {
