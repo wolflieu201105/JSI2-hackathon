@@ -315,7 +315,6 @@ class Scene2 extends Phaser.Scene {
             this.#players[i].nameTag.setInteractive();
             this.#players[i].nameTag.on("pointerdown",
                 function () {
-                    console.log(this.#gameTurn);
                     for (let I = 0; I < this.#players.length; I++) {
                         this.#players[I].nameTag.removeInteractive();
                     }
@@ -334,7 +333,7 @@ class Scene2 extends Phaser.Scene {
     #VoDe = {
         type: "VoDe",
         function: this.#voDe.bind(this),
-        number: 100
+        number: 10
     }
     #thuyTinh() { }
     #ThuyTinh = {
@@ -572,6 +571,7 @@ class Scene2 extends Phaser.Scene {
         }
     }
     #endTurn() {
+        console.log("change");
         for (let i = 0; i < this.#cards.length; i++) {
             if (this.#cards[i] != undefined) {
                 this.#cards[i].destroy();
@@ -639,7 +639,8 @@ class Scene2 extends Phaser.Scene {
                 for (let i = 0; i < this.#playDeck.length; i++) {
                     this.#cards[i].removeInteractive();
                 }
-                this.#skip.removeInteractive();
+                this.#skip.destroy();
+                this.#skip = this.add.image(1125, 100, `skip`);
                 this.#playDeck.splice(i, 1);
                 break;
             }
