@@ -60,6 +60,8 @@ class Scene2 extends Phaser.Scene {
     #swapTurn = 0;
     #swap1 = [];
     #swap2 = [];
+    #protected = [];
+    #protector = [];
     #ScardType = null;
     #initialPlayers = [this.#player1, this.#player2, this.#player3, this.#player4];
     #players = [this.#player1, this.#player2, this.#player3, this.#player4];
@@ -132,8 +134,10 @@ class Scene2 extends Phaser.Scene {
                         this.#bosses[I].removeInteractive();
                     }
                     this.#bossesPhase[i].health -= 2;
+                    this.#skip.setInteractive();
+                    this.#skip.on("pointerdown", this.#endTurn, this);
                     this.#displayBossCards();
-                    this.#displayPlayingCards()
+                    this.#displayPlayingCards();
                 },
                 this);
         }
@@ -147,7 +151,9 @@ class Scene2 extends Phaser.Scene {
     #phongThu() {
         this.#players[this.#gameTurn].defend += 1;
         console.log(this.#players);
-        this.#displayPlayingCards()
+        this.#skip.setInteractive();
+        this.#skip.on("pointerdown", this.#endTurn, this);
+        this.#displayPlayingCards();
     }
     #PhongThu = {
         type: "PhongThu",
@@ -156,7 +162,26 @@ class Scene2 extends Phaser.Scene {
         manaTaken: 1
     }
     #baoHoDongMinh() {
-        this.#displayPlayingCards()
+        for (let i = 0; i < this.#players.length; i++) {
+            if(i == this.#gameTurn){
+                continue;
+            }
+            this.#players[i].nameTag.setInteractive();
+            this.#players[i].nameTag.on("pointerdown",
+                function () {
+                    for (let I = 0; I < this.#players.length; I++) {
+                        this.#players[I].nameTag.removeInteractive();
+                    }
+                    this.#protected.push(i);
+                    console.log(this.#gameTurn);
+                    this.#protector.push(this.#gameTurn);
+                    this.#skip.setInteractive();
+                    this.#skip.on("pointerdown", this.#endTurn, this);
+                    this.#displayPlayingCards();
+                    this.#displayPlayers();
+                },
+                this);
+        }
     }
     #BaoHoDongMinh = {
         type: "BaoHoDongMinh",
@@ -165,7 +190,7 @@ class Scene2 extends Phaser.Scene {
         manaTaken: 1
     }
     #capCuu() {
-        if (this.#players[1].dead == false && this.#players[2].dead == false && this.#players[3].dead == false && this.#players[4].dead == false) {
+        if (this.#players[1].dead == false && this.#players[2].dead == false && this.#players[3].dead == false && this.#players[0].dead == false) {
             this.#mana += 2;
             this.#displayPlayingCards();
         }
@@ -184,6 +209,8 @@ class Scene2 extends Phaser.Scene {
                         function () {
                             this.#players[i].dead = false;
                             this.#players[i].health = 20;
+                            this.#skip.setInteractive();
+                            this.#skip.on("pointerdown", this.#endTurn, this);
                             this.#displayPlayingCards();
                             this.#displayPlayers();
                         },
@@ -211,6 +238,8 @@ class Scene2 extends Phaser.Scene {
                     else {
                         this.#swap2.push(i);
                         this.#swapTurn = 0;
+                        this.#skip.setInteractive();
+                        this.#skip.on("pointerdown", this.#endTurn, this);
                         this.#displayPlayingCards();
                         this.#displayPlayers();
                     }
@@ -235,7 +264,9 @@ class Scene2 extends Phaser.Scene {
             this.#playDeck.push(this.#deck1[this.#cardDrawn]);
             this.#deck1.splice(this.#cardDrawn, 1);
         }
-        this.#displayPlayingCards()
+        this.#skip.setInteractive();
+        this.#skip.on("pointerdown", this.#endTurn, this);
+        this.#displayPlayingCards();
     }
     #DieuBinhKhienTuong = {
         type: "DieuBinhKhienTuong",
@@ -244,22 +275,6 @@ class Scene2 extends Phaser.Scene {
         manaTaken: 1
     }
     #duongThuong() {
-        for (let i = 0; i < this.#players.length; i++) {
-            this.#players[i].nameTag.setInteractive();
-            this.#players[i].nameTag.on("pointerdown",
-                function () {
-                    for (let I = 0; I < this.#players.length; I++) {
-                        this.#players[I].nameTag.removeInteractive();
-                    }
-                    this.#players[i].health += 2;
-                    if (this.#players[i].health > 25) {
-                        this.#players[i].health = 25
-                    }
-                    this.#displayPlayingCards();
-                    this.#displayPlayers();
-                },
-                this);
-        }
     }
     #DuongThuong = {
         type: "DuongThuong",
@@ -281,6 +296,8 @@ class Scene2 extends Phaser.Scene {
                         this.#bosses[i].removeInteractive();
                     }
                     this.#bossesPhase[i].health -= 4;
+                    this.#skip.setInteractive();
+                    this.#skip.on("pointerdown", this.#endTurn, this);
                     this.#displayBossCards();
                     this.#displayPlayingCards();
                     this.#displayPlayers();
@@ -333,7 +350,7 @@ class Scene2 extends Phaser.Scene {
     #VoDe = {
         type: "VoDe",
         function: this.#voDe.bind(this),
-        number: 10
+        number: 4
     }
     #thuyTinh() { }
     #ThuyTinh = {
@@ -571,7 +588,6 @@ class Scene2 extends Phaser.Scene {
         }
     }
     #endTurn() {
-        console.log("change");
         for (let i = 0; i < this.#cards.length; i++) {
             if (this.#cards[i] != undefined) {
                 this.#cards[i].destroy();
@@ -627,6 +643,8 @@ class Scene2 extends Phaser.Scene {
                         for (let I = 0; I < this.#playDeck.length; I++) {
                             this.#cards[I].removeInteractive();
                         }
+                        this.#skip.destroy();
+                        this.#skip = this.add.image(1125, 100, `skip`);
                         this.#playDeck.splice(i, 1)
                     },
                     this);
@@ -670,7 +688,7 @@ class Scene2 extends Phaser.Scene {
     }
     update() {
         if (this.#movingObjects[0] != 0) {
-            this.#moveToCenter(this.#movingObjects[0], this.#movingObjects[0].x, this.#movingObjects[0].y, 600, 300, 15);
+            this.#moveToCenter(this.#movingObjects[0], this.#movingObjects[0].x, this.#movingObjects[0].y, 600, 300, 10);
         }
     }
 }
