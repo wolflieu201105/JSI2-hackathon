@@ -2,10 +2,8 @@ const config = {
     width: 1200,
     height: 600,
     backgroundColor: "#FDFF8E",
-    pixelArt: true,
-    physics: {
-        default: 'arcade'
-    },
+    resolution: window.devicePixelRatio,
+    parent:'phaser-example',
     scene: [Scene1, Scene2]
 }
 window.addEventListener("load", function(ev) {
