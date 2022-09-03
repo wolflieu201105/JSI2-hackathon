@@ -113,6 +113,7 @@ class Scene2 extends Phaser.Scene {
     #gameTurn = 0;
     #cardDrawn;
     #movingObjects = [0];
+    #phase = 0;
     // tạo ra các chức năng cho lá bài thường
     #tanCong() {
         for (let i = 0; i < this.#bossNumber; i++) {
@@ -277,7 +278,7 @@ class Scene2 extends Phaser.Scene {
                         this.#players[I].nameTag.removeInteractive();
                     }
                     this.#players[i].health += 2;
-                    if (this.#players[i].health > 25){
+                    if (this.#players[i].health > 25) {
                         this.#players[i].health = 25;
                     }
                     this.#skip.setInteractive();
@@ -400,7 +401,7 @@ class Scene2 extends Phaser.Scene {
         type: "ThuyTinh",
         function: this.#thuyTinh,
         maxHealth: 35,
-        health: 35
+        health: 1
     }
     // phase 2
     #chienThuyen() { }
@@ -542,73 +543,7 @@ class Scene2 extends Phaser.Scene {
             }
         }
         this.#displayBossTurn();
-        this.#phase1();
-    }
-    #phase1() {
-        this.#deck1 = [];
-        this.#deck2 = [];
-        for (let i = 0; i < this.#InitialCards.length; i++) {
-            for (let y = 0; y < this.#InitialCards[i].number; y++) {
-                this.#deck1.push(this.#InitialCards[i]);
-            }
-        }
-        for (let i = 0; i < this.#DapDe.number; i++) {
-            this.#deck1.push(this.#DapDe);
-        }
-        for (let i = 0; i < this.#VoDe.number; i++) {
-            this.#deck1.push(this.#VoDe);
-        }
-        this.#bossNumber = 1;
-        this.#bossesPhase = [this.#ThuyTinh];
-        for (let i = 0; i < this.#bossNumber; i++) {
-            this.#bosses[i] = this.add.image(585 - (this.#bossNumber * 100 + (this.#bossNumber - 1) * 25) / 2 + 125 * i, 100, this.#bossesPhase[i].type);
-            this.#bossHealths[i].healthBar = this.add.image(585 - (this.#bossNumber * 100 + (this.#bossNumber - 1) * 25) / 2 + 125 * i, 200, `healthBar`);
-            this.#bossHealths[i].display = this.add.text(535 - (this.#bossNumber * 100 + (this.#bossNumber - 1) * 25) / 2 + 125 * i, 175, `${this.#bossesPhase[i].health}/${this.#bossesPhase[i].maxHealth}`, { fontSize: "20px", color: "black" });
-        }
-        this.#bossUltility = this.add.image(910, 100, `LuLut`);
-        this.#ScardType = "DapDe";
-        this.#startPlaying(-1);
-    }
-    #phase1Boss(){
-        if (this.#bossTurn.turn == 1){
-            for (let i = 0; i < this.#players.length; i++) {
-                if(this.#players[i].Scard == undefined){
-                    this.#players[i].health -= 2;
-                }
-            }
-        }
-        else if (this.#bossTurn.turn == 2){
-            if(this.#players[0].defend < 2){
-                this.#players[0].health -= (2 - this.#players[0].defend);
-            }
-            if(this.#players[2].defend < 2){
-                this.#players[2].health -= (2 - this.#players[2].defend);
-            }
-        }
-        else {
-            if(this.#players[1].defend < 2){
-                this.#players[1].health -= (2 - this.#players[1].defend);
-            }
-            if(this.#players[3].defend < 2){
-                this.#players[3].health -= (2 - this.#players[3].defend);
-            }
-        }
-        if (this.#bossTurn.turn < 3) {
-            this.#bossTurn.turn += 1;
-        }
-        else {
-            this.#bossTurn.turn = 1;
-        }
-        this.#displayBossTurn()
-    }
-    #phase2() {
-        this.#deck1 = [];
-        this.#deck2 = [];
-        for (let i = 0; i < this.#InitialCards.length; i++) {
-            for (let y = 0; y < this.#InitialCards[i].number; y++) {
-                this.#deck1.push(this.#InitialCards[i].type);
-            }
-        }
+        this.#phases[this.#phase]();
     }
     #startPlaying() {
         if (this.#playTurn[this.#gameTurn] == "boss") {
@@ -619,7 +554,8 @@ class Scene2 extends Phaser.Scene {
                 this.#players[this.#swap1[i]] = this.#players[this.#swap2[i]];
                 this.#players[this.#swap2[i]] = this.#playerTC;
             }
-            this.#phase1Boss();
+
+            this.#phasesBoss[this.#phase]();
             for (let i = 0; i < 4; i++) {
                 this.#players[i].defend = 0;
                 if (this.#players[i].health <= 0) {
@@ -650,6 +586,26 @@ class Scene2 extends Phaser.Scene {
         }
     }
     #endTurn() {
+        for (let i = 0; i < this.#bossNumber; i++) {
+            if (this.#bossesPhase[i].health <= 0) {
+                console.log(this.#bosses);
+                this.#bossNumber -= 1;
+                this.#bosses[0].destroy();
+                this.#bosses[0] = undefined;
+                console.log(this.#bosses);
+                this.#bossHealths[i].healthBar.destroy();
+                this.#bossHealths[i].display.destroy();
+                this.#bossesPhase.splice(i, 1);
+            }
+        }
+        if (this.#bossNumber == 0) {
+            console.log(this.#phases);
+            this.#phase += 1;
+            this.#phases[this.#phase]();
+            this.#phasesBoss[this.#phase]();
+
+            return;
+        }
         for (let i = 0; i < this.#cards.length; i++) {
             if (this.#cards[i] != undefined) {
                 this.#cards[i].destroy();
@@ -664,10 +620,30 @@ class Scene2 extends Phaser.Scene {
         this.#playDeck = [];
         this.#skip.destroy();
         this.#skip = this.add.image(1125, 100, `skip`);
+        this.#displayBossCards();
         this.#startPlaying();
     }
+    #reset() {
+        for (let i = 0; i < this.#players.length; i++) {
+            this.#players[i].nameTag.destroy();
+            this.#players[i].healthBar.destroy();
+            this.#players[i].display.destroy();
+            if (this.#players[i].Scard != undefined) {
+                this.#players[i].Scard.destroy();
+            }
+        }
+        if (this.#manaDisplay != undefined) {
+            this.#manaDisplay.destroy();
+        }
+        for (let i = 0; i < this.#cards.length; i++) {
+            if (this.#cards[i] != undefined) {
+                this.#cards[i].destroy();
+            }
+        }
+        this.#skip.destroy();
+    }
     #displayPlayers() {
-        for (let i = 0; i < this.#playTurn.length - 1; i++) {
+        for (let i = 0; i < this.#players.length; i++) {
             this.#players[i].nameTag.destroy();
             this.#players[i].healthBar.destroy();
             this.#players[i].display.destroy();
@@ -734,9 +710,9 @@ class Scene2 extends Phaser.Scene {
             this.#bossHealths[i].display = this.add.text(535 - (this.#bossNumber * 100 + (this.#bossNumber - 1) * 25) / 2 + 125 * i, 175, `${this.#bossesPhase[i].health}/${this.#bossesPhase[i].maxHealth}`, { fontSize: "20px", color: "black" });
         }
     }
-    #displayBossTurn(){
-        this.#bossTurn.background = this.add.image(162.5, 62.5, `bossTurn`);
-        this.#bossTurn.display = this.add.text(115, 52.5, `Turn ${this.#bossTurn.turn}/3`, { fontSize: "20px", color: "black" });
+    #displayBossTurn() {
+        this.#bossTurn.background = this.add.image(117.5, 62.5, `bossTurn`);
+        this.#bossTurn.display = this.add.text(70, 52.5, `Turn ${this.#bossTurn.turn}/3`, { fontSize: "20px", color: "black" });
     }
     #moveToCenter(obj, x1, y1, x2, y2, t) {
         let vx = (x2 - x1) / t;
@@ -755,4 +731,96 @@ class Scene2 extends Phaser.Scene {
             this.#moveToCenter(this.#movingObjects[0], this.#movingObjects[0].x, this.#movingObjects[0].y, 600, 300, 10);
         }
     }
+    #phase1() {
+        this.#deck1 = [];
+        this.#deck2 = [];
+        for (let i = 0; i < this.#InitialCards.length; i++) {
+            for (let y = 0; y < this.#InitialCards[i].number; y++) {
+                this.#deck1.push(this.#InitialCards[i]);
+            }
+        }
+        for (let i = 0; i < this.#DapDe.number; i++) {
+            this.#deck1.push(this.#DapDe);
+        }
+        for (let i = 0; i < this.#VoDe.number; i++) {
+            this.#deck1.push(this.#VoDe);
+        }
+        this.#bossNumber = 1;
+        this.#bossesPhase = [this.#ThuyTinh];
+        for (let i = 0; i < this.#bossNumber; i++) {
+            this.#bosses[i] = this.add.image(585 - (this.#bossNumber * 100 + (this.#bossNumber - 1) * 25) / 2 + 125 * i, 100, this.#bossesPhase[i].type);
+            this.#bossHealths[i].healthBar = this.add.image(585 - (this.#bossNumber * 100 + (this.#bossNumber - 1) * 25) / 2 + 125 * i, 200, `healthBar`);
+            this.#bossHealths[i].display = this.add.text(535 - (this.#bossNumber * 100 + (this.#bossNumber - 1) * 25) / 2 + 125 * i, 175, `${this.#bossesPhase[i].health}/${this.#bossesPhase[i].maxHealth}`, { fontSize: "20px", color: "black" });
+        }
+        this.#bossUltility = this.add.image(910, 100, `LuLut`);
+        this.#ScardType = "DapDe";
+        this.#startPlaying(-1);
+    }
+    #phase1Boss() {
+        if (this.#bossTurn.turn == 1) {
+            for (let i = 0; i < this.#players.length; i++) {
+                if (this.#players[i].Scard == undefined) {
+                    this.#players[i].health -= 2;
+                }
+            }
+        }
+        else if (this.#bossTurn.turn == 2) {
+            if (this.#players[0].defend < 2) {
+                this.#players[0].health -= (2 - this.#players[0].defend);
+            }
+            if (this.#players[2].defend < 2) {
+                this.#players[2].health -= (2 - this.#players[2].defend);
+            }
+        }
+        else {
+            if (this.#players[1].defend < 2) {
+                this.#players[1].health -= (2 - this.#players[1].defend);
+            }
+            if (this.#players[3].defend < 2) {
+                this.#players[3].health -= (2 - this.#players[3].defend);
+            }
+        }
+        if (this.#bossTurn.turn < 3) {
+            this.#bossTurn.turn += 1;
+        }
+        else {
+            this.#bossTurn.turn = 1;
+        }
+        this.#displayBossTurn()
+    }
+    #phase2() {
+        this.#deck1 = [];
+        this.#deck2 = [];
+        for (let i = 0; i < this.#InitialCards.length; i++) {
+            for (let y = 0; y < this.#InitialCards[i].number; y++) {
+                this.#deck1.push(this.#InitialCards[i].type);
+            }
+        }
+        for (let i = 0; i < this.#DapDe.number; i++) {
+            this.#deck1.push(this.#DapDe);
+        }
+        for (let i = 0; i < this.#VoDe.number; i++) {
+            this.#deck1.push(this.#VoDe);
+        }
+        this.#bossNumber = 1;
+        console.log(this);
+        this.#bossesPhase = [this.#ThuyTinh];
+        for (let i = 0; i < this.#bossNumber; i++) {
+            this.#bosses[i] = this.add.image(585 - (this.#bossNumber * 100 + (this.#bossNumber - 1) * 25) / 2 + 125 * i, 100, this.#bossesPhase[i].type);
+            this.#bossHealths[i].healthBar = this.add.image(585 - (this.#bossNumber * 100 + (this.#bossNumber - 1) * 25) / 2 + 125 * i, 200, `healthBar`);
+            this.#bossHealths[i].display = this.add.text(535 - (this.#bossNumber * 100 + (this.#bossNumber - 1) * 25) / 2 + 125 * i, 175, `${this.#bossesPhase[i].health}/${this.#bossesPhase[i].maxHealth}`, { fontSize: "20px", color: "black" });
+        }
+        this.#bossUltility = this.add.image(910, 100, `LuLut`);
+        this.#ScardType = "DapDe";
+        this.#startPlaying(-1);
+    }
+    #phase2Boss() { }
+    #phase3() { }
+    #phase3Boss() { }
+    #phase4() { }
+    #phase4Boss() { }
+    #phase5() { }
+    #phase5Boss() { }
+    #phases = [this.#phase1.bind(this), this.#phase2.bind(this), this.#phase3.bind(this), this.#phase4.bind(this), this.#phase5.bind(this)];
+    #phasesBoss = [this.#phase1Boss.bind(this), this.#phase2Boss.bind(this), this.#phase3Boss.bind(this), this.#phase4Boss.bind(this), this.#phase5Boss.bind(this)];
 }
