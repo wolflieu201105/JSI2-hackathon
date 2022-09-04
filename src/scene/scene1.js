@@ -18,7 +18,6 @@ class Scene1 extends Phaser.Scene {
         this.load.image(`Scard`, "assets/image/Players/Scard.png");
         this.load.image("bossTurn", "assets/image/Boss/bossTurn.png");
         this.load.image("bossCharacters", "assets/image/Boss/bossCharacters.png");
-        this.load.image("bossUtility", "assets/image/Boss/bossUtility.png");
         this.load.image("time", "assets/image/Neutral/time.png");
         this.load.image("skip", "assets/image/Neutral/skip.png");
         this.load.image("cards", "assets/image/Playing/Cards.png");
@@ -48,6 +47,7 @@ class Scene1 extends Phaser.Scene {
         this.load.image("PhongThu", "assets/image/PlayingCards/PhongThu.png");
         this.load.image("TanCong", "assets/image/PlayingCards/TanCong.png");
         this.load.image("TienThoaiLuongNan", "assets/image/PlayingCards/TienThoaiLuongNan.png");
+        this.load.image("MuaTen", "assets/image/PlayingCards/MuaTen.png")
     }
     #phase1() {
         this.load.image("DapDe", "assets/image/Phase/Phase1/DapDe.png");
